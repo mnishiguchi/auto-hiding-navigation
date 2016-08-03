@@ -3,103 +3,70 @@
  */
 document.addEventListener('DOMContentLoaded', function() {
 
-  var mainHeader          = $('.cd-auto-hide-header')
-  var secondaryNavigation = $('.cd-secondary-nav')
-
-  // This applies only if secondary nav is below intro section.
-  var belowNavHeroContent = $('.sub-nav-hero')
+  var header = document.querySelector('.auto-hide-header')
 
 	// Obtain the height of the entire header.
-  var headerHeight = mainHeader.height()
+  var headerHeight = header.offsetHeight
 
   // Set scrolling variables.
-  var scrolling    = false
+  var isScrolling  = false
   var previousTop  = 0
   var currentTop   = 0
-  var scrollDelta  = 10
-  var scrollOffset = 150
 
-  mainHeader.on('click', '.nav-trigger', function(event){
-    // Open primary navigation on mobile.
+  // Scrolling sensitivity.
+  var scrollDelta  = 10   // No animation 0..10px of acrolling.
+  var scrollOffset = 150  // No animation 0..150px at the top.
+
+  // Event listeners.
+  document.querySelector('.hamburger').addEventListener('click', onHamburgerClick)
+  window.addEventListener('scroll', autoHideHeader)
+  window.addEventListener('resize', updateHeaderHeight)
+
+  /**
+   * @param  {[type]} event
+   */
+  function onHamburgerClick(event) {
     event.preventDefault()
-    mainHeader.toggleClass('nav-open')
-  })
-
-  window.addEventListener('scroll', function(){
-    if( !scrolling ) {
-      scrolling = true;
-      (!window.requestAnimationFrame)
-        ? setTimeout(autoHideHeader, 250)
-        : requestAnimationFrame(autoHideHeader)
-    }
-  })
-
-  window.addEventListener('resize', function(){
-    headerHeight = mainHeader.height()
-  })
-
-  function autoHideHeader() {
-    var currentTop = $(window).scrollTop()
-
-    if ( belowNavHeroContent.length > 0 ) {
-      checkStickyNavigation(currentTop) // secondary navigation below intro
-    } else {
-      checkSimpleNavigation(currentTop);
-    }
-
-    previousTop = currentTop;
-    scrolling = false;
-  }
-
-  function checkSimpleNavigation(currentTop) {
-    // There's no secondary nav or secondary nav is below primary nav.
-    if (previousTop - currentTop > scrollDelta) {
-      // If scrolling up...
-      mainHeader.removeClass('is-hidden')
-    } else if( currentTop - previousTop > scrollDelta && currentTop > scrollOffset) {
-      // If scrolling down...
-      mainHeader.addClass('is-hidden')
-    }
+    header.classList.toggle('nav-open')
   }
 
   /**
-   * This function is used only for the `Nav+Hero+Subnav` variant.
+   * Updates the value of the header's heights.
    */
-  function checkStickyNavigation(currentTop) {
-    // Secondary navigation below intro section - sticky secondary navigation.
-    var secondaryNavOffsetTop = belowNavHeroContent.offset().top - secondaryNavigation.height() - mainHeader.height()
+  function updateHeaderHeight() {
+    headerHeight = header.offsetHeight
+  }
 
-    if (previousTop >= currentTop ) {
-      // If scrolling up...
-      if( currentTop < secondaryNavOffsetTop ) {
+  /**
+   * [autoHideHeader description]
+   */
+  function autoHideHeader() {
+    // The number of pixels that the document has already been scrolled vertically.
+    // Obtain the current position of the top.
+    currentTop = window.scrollY
 
-        // Secondary navigation is not fixed.
-        mainHeader.removeClass('is-hidden')
-        secondaryNavigation.removeClass('fixed slide-up')
-        belowNavHeroContent.removeClass('secondary-nav-fixed')
-
-      } else if( previousTop - currentTop > scrollDelta ) {
-        // Secondary navigation is fixed.
-        mainHeader.removeClass('is-hidden')
-        secondaryNavigation.removeClass('slide-up').addClass('fixed')
-        belowNavHeroContent.addClass('secondary-nav-fixed')
-      }
-
-    } else {
-      // If scrolling down...
-      if( currentTop > secondaryNavOffsetTop + scrollOffset ) {
-        // Hide primary navigation.
-        mainHeader.addClass('is-hidden')
-        secondaryNavigation.addClass('fixed slide-up')
-        belowNavHeroContent.addClass('secondary-nav-fixed')
-
-      } else if( currentTop > secondaryNavOffsetTop ) {
-        // Once the secondary navigation is fixed...
-        // do not hide primary naviagation if you haven't scrolled more than scrollOffset.
-        mainHeader.removeClass('is-hidden')
-        secondaryNavigation.addClass('fixed').removeClass('slide-up')
-        belowNavHeroContent.addClass('secondary-nav-fixed')
-      }
+    // Show/hide the header according to the scroll direction.
+    if ( isUpScroll() ) {
+      header.classList.remove('is-hidden')
+    } else if ( isDownScroll() ) {
+      header.classList.add('is-hidden')
     }
+
+    // Store the value of the current position as previous.
+    previousTop = currentTop;
+  }
+
+  /**
+   * @return {Boolean} true if the document is scrolling down.
+   */
+  function isDownScroll() {
+    return (currentTop - previousTop > scrollDelta) && (currentTop > scrollOffset)
+  }
+
+  /**
+   * @return {Boolean} true if the document is scrolling up.
+   */
+  function isUpScroll() {
+    return previousTop - currentTop > scrollDelta
   }
 })
